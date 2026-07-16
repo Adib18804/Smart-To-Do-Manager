@@ -2,6 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const dotenv = require('dotenv');
+const fs = require('fs');
 
 // Load environment variables from .env
 dotenv.config();
@@ -9,8 +10,8 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Import database pool to auto-create tables
-const pool = require('./config/db'); // আপনার db.js ফাইলের পাথ এটিই হওয়ার কথা
+// Import database pool
+const pool = require('./config/db'); 
 
 // Import middlewares and routers
 const authMiddleware = require('./middleware/authMiddleware');
@@ -43,84 +44,47 @@ app.use(session({
 app.use(express.static(path.join(__dirname, '../public')));
 
 // ==========================================
-// DATABASE AUTO-MIGRATION (টেবিল অটো-তৈরি করার স্ক্রিপ্ট)
+// DATABASE AUTO-MIGRATION FROM SQL FILE
 // ==========================================
 async function initDatabase() {
   try {
-    console.log('⏳ Checking and initializing database tables...');
+    console.log('⏳ Checking and initializing database tables from SQL file...');
     
-    // ১. ইউজার টেবিল তৈরি
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        email VARCHAR(255) NOT NULL UNIQUE,
-        password VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      ) ENGINE=InnoDB;
-    `);
+    // database/student_life_management.sql ফাইলের সঠিক পাথ নির্ধারণ
+    const sqlFilePath = path.join(__dirname, '../database/student_life_management.sql');
+    
+    if (fs.existsSync(sqlFilePath)) {
+      const sqlQueries = fs.readFileSync(sqlFilePath, 'utf8');
+      
+      // SQL ফাইলটিকে সেমিকোলন দিয়ে ভাগ করা হচ্ছে
+      const queries = sqlQueries
+        .split(';')
+        .map(q => q.trim())
+        .filter(q => q.length > 0);
 
-    // ২. টাস্ক টেবিল তৈরি (যদি আপনার প্রোজেক্টে থাকে)
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS tasks (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        title VARCHAR(255) NOT NULL,
-        description TEXT,
-        status VARCHAR(50) DEFAULT 'pending',
-        due_date DATE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      ) ENGINE=InnoDB;
-    `);
-
-    // ৩. এক্সপেন্স/খরচ টেবিল তৈরি
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS expenses (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        title VARCHAR(255) NOT NULL,
-        amount DECIMAL(10, 2) NOT NULL,
-        category VARCHAR(100),
-        date DATE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      ) ENGINE=InnoDB;
-    `);
-
-    // ৪. স্টাডি সেশন টেবিল তৈরি
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS study_sessions (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        subject VARCHAR(255) NOT NULL,
-        duration INT NOT NULL, -- duration in minutes
-        date DATE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      ) ENGINE=InnoDB;
-    `);
-
-    // ৫. গোল/লক্ষ্য টেবিল তৈরি
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS goals (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        title VARCHAR(255) NOT NULL,
-        target_date DATE,
-        status VARCHAR(50) DEFAULT 'active',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      ) ENGINE=InnoDB;
-    `);
-
-    console.log('✅ All database tables checked/created successfully!');
+      for (let query of queries) {
+        // DROP DATABASE, CREATE DATABASE বা USE কুয়েরিগুলোকে বাদ দিচ্ছি
+        if (
+          query.toUpperCase().startsWith('DROP DATABASE') ||
+          query.toUpperCase().startsWith('CREATE DATABASE') ||
+          query.toUpperCase().startsWith('USE')
+        ) {
+          continue; 
+        }
+        
+        // শুধু CREATE TABLE বা INSERT কুয়েরিগুলো রান করছি
+        await pool.query(query);
+      }
+      console.log('✅ All database tables successfully initialized from student_life_management.sql!');
+    } else {
+      console.warn('⚠️ SQL file not found at:', sqlFilePath);
+    }
   } catch (error) {
     console.error('❌ Failed to initialize database tables:', error.message);
   }
 }
 
-// ডাটাবেজ টেবিলগুলো তৈরি করার ফাংশনটি রান করানো হলো
+// ডাটাবেজ ইনিশিয়েট করার ফাংশনটি কল করা হলো
 initDatabase();
 
 // ==========================================
