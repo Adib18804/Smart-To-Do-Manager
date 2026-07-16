@@ -11,7 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Import database pool
-const pool = require('./config/db'); 
+const pool = require('./config/db'); // db.js ফাইলটি server/config/db.js-এ আছে
 
 // Import middlewares and routers
 const authMiddleware = require('./middleware/authMiddleware');
@@ -54,28 +54,43 @@ async function initDatabase() {
     const sqlFilePath = path.join(__dirname, '../database/student_life_management.sql');
     
     if (fs.existsSync(sqlFilePath)) {
-      const sqlQueries = fs.readFileSync(sqlFilePath, 'utf8');
+      let sqlQueries = fs.readFileSync(sqlFilePath, 'utf8');
       
-      // SQL ফাইলটিকে সেমিকোলন দিয়ে ভাগ করা হচ্ছে
+      // ১. SQL ফাইলের সব কমেন্ট লাইন (যেমন -- বা /* */) এবং ফালতু স্পেস মুছে ফেলা হচ্ছে
+      sqlQueries = sqlQueries
+        .replace(/--.*$/gm, '') // একক লাইনের কমেন্ট মুছে ফেলা
+        .replace(/\/\*[\s\S]*?\*\//g, '') // মাল্টি-লাইন কমেন্ট মুছে ফেলা
+        .replace(/\r/g, ''); // উইন্ডোজ ক্যারি রিটার্ন রিমুভ করা
+
+      // ২. সেমিকোলন দিয়ে প্রতিটি কুয়েরি আলাদা করা হচ্ছে
       const queries = sqlQueries
         .split(';')
         .map(q => q.trim())
         .filter(q => q.length > 0);
 
       for (let query of queries) {
-        // DROP DATABASE, CREATE DATABASE বা USE কুয়েরিগুলোকে বাদ দিচ্ছি
+        const upperQuery = query.toUpperCase();
+        
+        // ৩. DROP DATABASE, CREATE DATABASE বা USE কুয়েরিগুলোকে বাদ দেওয়া হচ্ছে
         if (
-          query.toUpperCase().startsWith('DROP DATABASE') ||
-          query.toUpperCase().startsWith('CREATE DATABASE') ||
-          query.toUpperCase().startsWith('USE')
+          upperQuery.startsWith('DROP DATABASE') ||
+          upperQuery.startsWith('CREATE DATABASE') ||
+          upperQuery.startsWith('USE')
         ) {
           continue; 
         }
         
-        // শুধু CREATE TABLE বা INSERT কুয়েরিগুলো রান করছি
-        await pool.query(query);
+        // ৪. প্রতিটি কুয়েরি আলাদা ব্লকে চালানো হচ্ছে যেন একটি টেবিলে ওয়ার্নিং আসলেও বাকিগুলো না থামে
+        try {
+          await pool.query(query);
+        } catch (err) {
+          // যদি টেবিল অলরেডি তৈরি থাকে, তবে সেই ওয়ার্নিংটি আমরা ইগনোর করব
+          if (!err.message.includes('already exists') && !err.message.includes('Already exists')) {
+            console.warn(`⚠️ Execution warning on query: "${query.substring(0, 50)}..." -> ${err.message}`);
+          }
+        }
       }
-      console.log('✅ All database tables successfully initialized from student_life_management.sql!');
+      console.log('✅ Database initialization process completed successfully!');
     } else {
       console.warn('⚠️ SQL file not found at:', sqlFilePath);
     }
