@@ -10,9 +10,14 @@ const dbConfig = {
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'student_life_management',
+  port: process.env.DB_PORT || 3306, // পোর্ট অ্যাড করা হলো
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  // ⚠️ এভিয়েন ক্লাউড ডাটাবেজে কানেক্ট করার জন্য SSL অপশনটি যোগ করা হলো
+  ssl: {
+    rejectUnauthorized: false
+  }
 };
 
 const pool = mysql.createPool(dbConfig);
