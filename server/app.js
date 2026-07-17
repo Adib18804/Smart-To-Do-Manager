@@ -188,7 +188,7 @@ async function initDatabase() {
         `);
         await pool.query(`
           CREATE TABLE IF NOT EXISTS \`categories\` (
-git add .            \`category_id\` INT AUTO_INCREMENT PRIMARY KEY,
+            \`category_id\` INT AUTO_INCREMENT PRIMARY KEY,
             \`user_id\` INT NOT NULL,
             \`name\` VARCHAR(100) NOT NULL,
             \`color\` VARCHAR(50) DEFAULT NULL,

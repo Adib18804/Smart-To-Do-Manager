@@ -51,7 +51,7 @@ function updateCards(cards) {
   document.getElementById('card-completed-tasks').textContent = cards.completedTasks;
   document.getElementById('card-pending-tasks').textContent = cards.pendingTasks;
   document.getElementById('card-study-hours').textContent = parseFloat(cards.totalStudyHours).toFixed(1);
-  document.getElementById('card-monthly-expenses').textContent = `$${parseFloat(cards.monthlyExpenses).toFixed(2)}`;
+  document.getElementById('card-monthly-expenses').textContent = `৳${parseFloat(cards.monthlyExpenses).toFixed(2)}`;
   document.getElementById('card-active-goals').textContent = cards.activeGoals;
   
   // Set initials on avatar
@@ -312,7 +312,7 @@ function initializeCharts(chartData) {
             grid: { color: gridColor },
             ticks: { 
               color: textColor,
-              callback: value => '$' + value
+              callback: value => '৳' + value
             }
           }
         }

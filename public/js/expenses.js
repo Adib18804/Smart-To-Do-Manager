@@ -88,7 +88,7 @@ function renderExpensesTable(expenses) {
         <td class="px-6 py-4.5">
           <span class="text-xs font-bold px-2.5 py-0.5 rounded-md ${badgeClass}">${item.category}</span>
         </td>
-        <td class="px-6 py-4.5 font-bold text-rose-500">$${parseFloat(item.amount).toFixed(2)}</td>
+        <td class="px-6 py-4.5 font-bold text-rose-500">৳${parseFloat(item.amount).toFixed(2)}</td>
         <td class="px-6 py-4.5 text-slate-500 font-medium">${dateStr}</td>
         <td class="px-6 py-4.5 text-xs text-slate-500 dark:text-slate-400 max-w-xs truncate">${notesStr}</td>
         <td class="px-6 py-4.5 text-right">
@@ -108,7 +108,7 @@ function renderExpensesTable(expenses) {
 
 // Update text cards and load Chart.js distributions
 function updateSummaryWidgets(analytics) {
-  document.getElementById('monthly-spend-total').textContent = `$${parseFloat(analytics.monthlyTotal).toFixed(2)}`;
+  document.getElementById('monthly-spend-total').textContent = `৳${parseFloat(analytics.monthlyTotal).toFixed(2)}`;
 
   // Prepare and construct category doughnut chart
   const canvas = document.getElementById('categoryChart');
@@ -149,7 +149,7 @@ function updateSummaryWidgets(analytics) {
         <div class="flex items-center gap-2">
           <span class="w-2.5 h-2.5 rounded-full ${textBadgeDot}"></span>
           <span class="font-medium text-slate-600 dark:text-slate-400">${c}:</span>
-          <span class="font-bold text-slate-800 dark:text-slate-200">$${amt}</span>
+          <span class="font-bold text-slate-800 dark:text-slate-200">৳${amt}</span>
         </div>
       `;
     }).join('');
