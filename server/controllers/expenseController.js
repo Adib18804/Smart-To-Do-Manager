@@ -7,7 +7,7 @@ const expenseController = {
    */
   async getAll(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const expenses = await Expense.getAll(userId);
       return res.json({ success: true, expenses });
     } catch (error) {
@@ -21,7 +21,7 @@ const expenseController = {
    */
   async getOne(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const expenseId = req.params.id;
 
       const expense = await Expense.findById(userId, expenseId);
@@ -40,7 +40,7 @@ const expenseController = {
    */
   async create(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const { title, amount, category, expense_date, notes } = req.body;
 
       if (!title || !title.trim()) {
@@ -57,7 +57,7 @@ const expenseController = {
 
       const expenseId = await Expense.create(userId, { title, amount, category, expense_date, notes });
 
-      await Activity.log(userId, 'Create', 'Expenses', `Logged expense: "${title}" - $${amount}`);
+      await Activity.log(req.session.userId, 'Create', 'Expenses', `Logged expense: "${title}" - ৳${amount}`);
 
       return res.status(201).json({ success: true, message: 'Expense logged successfully.', expenseId });
     } catch (error) {
@@ -71,7 +71,7 @@ const expenseController = {
    */
   async update(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const expenseId = req.params.id;
       const { title, amount, category, expense_date, notes } = req.body;
 
@@ -97,7 +97,7 @@ const expenseController = {
         return res.status(400).json({ success: false, error: 'Failed to update expense.' });
       }
 
-      await Activity.log(userId, 'Update', 'Expenses', `Updated expense: "${title}" (from $${originalExpense.amount} to $${amount})`);
+      await Activity.log(req.session.userId, 'Update', 'Expenses', `Updated expense: "${title}" (from ৳${originalExpense.amount} to ৳${amount})`);
 
       return res.json({ success: true, message: 'Expense updated successfully.' });
     } catch (error) {
@@ -111,7 +111,7 @@ const expenseController = {
    */
   async delete(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const expenseId = req.params.id;
 
       const expense = await Expense.findById(userId, expenseId);
@@ -124,7 +124,7 @@ const expenseController = {
         return res.status(400).json({ success: false, error: 'Failed to delete expense.' });
       }
 
-      await Activity.log(userId, 'Delete', 'Expenses', `Deleted expense: "${expense.title}" - $${expense.amount}`);
+      await Activity.log(req.session.userId, 'Delete', 'Expenses', `Deleted expense: "${expense.title}" - ৳${expense.amount}`);
 
       return res.json({ success: true, message: 'Expense deleted successfully.' });
     } catch (error) {
@@ -138,7 +138,7 @@ const expenseController = {
    */
   async getAnalytics(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       
       const monthlyTotal = await Expense.getMonthlyTotal(userId);
       const categoryTotals = await Expense.getCategoryTotals(userId);

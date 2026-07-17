@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const User = require('../models/userModel');
 const Activity = require('../models/activityModel');
 
@@ -10,8 +11,14 @@ const authController = {
     try {
       const { name, email, password } = req.body;
 
-      if (!name || !email || !password) {
+      if (!name || !name.trim() || !email || !email.trim() || !password) {
         return res.status(400).json({ success: false, error: 'All fields are required.' });
+      }
+
+      // Email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ success: false, error: 'Invalid email address format.' });
       }
 
       if (password.length < 6) {
@@ -34,6 +41,7 @@ const authController = {
       // Setup session
       req.session.userId = userId;
       req.session.userName = name;
+      req.session.role = 'User';
 
       // Log activity
       await Activity.log(userId, 'Create', 'Authentication', `New user registered: ${name}`);
@@ -41,7 +49,7 @@ const authController = {
       return res.status(201).json({
         success: true,
         message: 'Registration successful!',
-        user: { name, email }
+        user: { name, email, role: 'User' }
       });
     } catch (error) {
       console.error('Registration Error:', error);
@@ -75,11 +83,12 @@ const authController = {
       // Set session
       req.session.userId = user.user_id;
       req.session.userName = user.name;
+      req.session.role = user.role;
 
       return res.json({
         success: true,
         message: 'Login successful!',
-        user: { name: user.name, email: user.email }
+        user: { name: user.name, email: user.email, role: user.role }
       });
     } catch (error) {
       console.error('Login Error:', error);
@@ -117,9 +126,102 @@ const authController = {
         console.error('Logout error:', err);
         return res.status(500).json({ success: false, error: 'Could not log out.' });
       }
-      res.clearCookie('sid'); // Match express-session cookie name standard (we'll name it 'sid')
+      res.clearCookie('sid');
       return res.json({ success: true, message: 'Logged out successfully.' });
     });
+  },
+
+  /**
+   * Request password reset token
+   */
+  async forgotPassword(req, res) {
+    try {
+      const { email } = req.body;
+
+      if (!email || !email.trim()) {
+        return res.status(400).json({ success: false, error: 'Email address is required.' });
+      }
+
+      const user = await User.findByEmail(email);
+      if (!user) {
+        return res.status(400).json({ success: false, error: 'Email address not registered.' });
+      }
+
+      // Generate secure 40-character hex token
+      const resetToken = crypto.randomBytes(20).toString('hex');
+      const expirationDate = new Date(Date.now() + 3600000); // 1 Hour from now
+
+      // Save token and expiry date to db
+      await User.updateResetToken(email, resetToken, expirationDate);
+
+      // Construct reset link
+      const devPort = req.socket.localPort || 3000;
+      const resetLink = `http://localhost:${devPort}/reset-password?token=${resetToken}`;
+
+      // Console Logging (Development Mode Recovery)
+      console.log("\n================================================");
+      console.log(`🔑 PASSWORD RESET REQUEST RECEIVED`);
+      console.log(`User: ${user.name} (${email})`);
+      console.log(`Reset Link: ${resetLink}`);
+      console.log("================================================\n");
+
+      return res.json({
+        success: true,
+        message: 'Password reset link generated and logged to console.',
+        devLink: resetLink // Return link for easy development testing
+      });
+    } catch (error) {
+      console.error('Forgot Password Error:', error);
+      return res.status(500).json({ success: false, error: 'Internal Server Error.' });
+    }
+  },
+
+  /**
+   * Reset user password using token
+   */
+  async resetPassword(req, res) {
+    try {
+      const { token, password, confirmPassword } = req.body;
+
+      if (!token) {
+        return res.status(400).json({ success: false, error: 'Reset token is required.' });
+      }
+
+      if (!password || !confirmPassword) {
+        return res.status(400).json({ success: false, error: 'Password and password confirmation are required.' });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({ success: false, error: 'Password must be at least 6 characters long.' });
+      }
+
+      if (password !== confirmPassword) {
+        return res.status(400).json({ success: false, error: 'Passwords do not match.' });
+      }
+
+      const user = await User.findByResetToken(token);
+      if (!user) {
+        return res.status(400).json({ success: false, error: 'Invalid or expired password reset token.' });
+      }
+
+      // Hash new password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
+      // Save password and clear reset token fields
+      await User.updatePassword(user.user_id, hashedPassword);
+
+      // Log activity
+      await Activity.log(user.user_id, 'Update', 'Authentication', 'Password reset successfully');
+
+      return res.json({
+        success: true,
+        message: 'Your password has been reset successfully. You can now log in.'
+      });
+    } catch (error) {
+      console.error('Reset Password Error:', error);
+      return res.status(500).json({ success: false, error: 'Internal Server Error.' });
+    }
   }
 };
 

@@ -10,6 +10,9 @@
   DROP TABLE IF EXISTS `study_sessions`;
   DROP TABLE IF EXISTS `expenses`;
   DROP TABLE IF EXISTS `tasks`;
+  DROP TABLE IF EXISTS `attendance`;
+  DROP TABLE IF EXISTS `notes`;
+  DROP TABLE IF EXISTS `categories`;
   DROP TABLE IF EXISTS `users`;
 
   -- 1. Users Table
@@ -18,6 +21,9 @@
     `name` VARCHAR(100) NOT NULL,
     `email` VARCHAR(100) UNIQUE NOT NULL,
     `password` VARCHAR(255) NOT NULL,
+    `role` VARCHAR(20) DEFAULT 'User',
+    `reset_token` VARCHAR(255) DEFAULT NULL,
+    `reset_token_expires` DATETIME DEFAULT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -43,7 +49,7 @@
     `user_id` INT NOT NULL,
     `title` VARCHAR(255) NOT NULL,
     `amount` DECIMAL(10, 2) NOT NULL,
-    `category` ENUM('Food', 'Transport', 'Education', 'Entertainment', 'Others') DEFAULT 'Others',
+    `category` VARCHAR(100) DEFAULT 'Others',
     `expense_date` DATE NOT NULL,
     `notes` TEXT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -95,14 +101,51 @@
     INDEX (`created_at`)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+  -- 7. Attendance Table
+  CREATE TABLE `attendance` (
+    `attendance_id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `subject` VARCHAR(100) NOT NULL,
+    `date` DATE NOT NULL,
+    `status` ENUM('Present', 'Absent', 'Late') DEFAULT 'Present',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+    INDEX (`user_id`),
+    INDEX (`date`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+  -- 8. Notes Table
+  CREATE TABLE `notes` (
+    `note_id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `title` VARCHAR(255) NOT NULL,
+    `content` TEXT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+    INDEX (`user_id`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+  -- 9. Categories Table
+  CREATE TABLE `categories` (
+    `category_id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `name` VARCHAR(100) NOT NULL,
+    `color` VARCHAR(50) DEFAULT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+    INDEX (`user_id`),
+    UNIQUE KEY `user_category` (`user_id`, `name`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
   -- ==========================================
   -- INSERT SAMPLE DATA (For Instant Dashboard Rendering)
   -- ==========================================
 
   -- Default student user (Email: test@test.com, Password: password123)
-  -- The password hash below corresponds to standard bcrypt('password123')
-  INSERT INTO `users` (`user_id`, `name`, `email`, `password`) VALUES
-  (1, 'Demo Student', 'test@test.com', '$2a$10$wK1F5lI.0h2R6eQ9k076P.pSefZ3HshG6B6Jq7GgeZ3b4rM9Lge/K');
+  -- Default super admin (Email: admin@smartstudent.com, Password: Admin@123)
+  INSERT INTO `users` (`user_id`, `name`, `email`, `password`, `role`) VALUES
+  (1, 'Demo Student', 'test@test.com', '$2a$10$wK1F5lI.0h2R6eQ9k076P.pSefZ3HshG6B6Jq7GgeZ3b4rM9Lge/K', 'User'),
+  (2, 'Administrator', 'admin@smartstudent.com', '$2a$10$Lk.uHenxBPt8GPhqATsXJOQAuzKvMBMaOClIVcDAymk.I89lm2csO', 'Super Admin');
 
   -- Tasks
   INSERT INTO `tasks` (`user_id`, `title`, `description`, `priority`, `status`, `deadline`) VALUES
@@ -133,6 +176,26 @@
   (1, 'Maintain 9.0+ CGPA', CURDATE() + INTERVAL 60 DAY, 85, 'Active'),
   (1, 'Complete 5 Core Projects', CURDATE() + INTERVAL 30 DAY, 60, 'Active'),
   (1, 'Daily Exercise for 30 Days', CURDATE() - INTERVAL 5 DAY, 100, 'Completed');
+
+  -- Categories
+  INSERT INTO `categories` (`user_id`, `name`, `color`) VALUES
+  (1, 'Food', 'rgba(99, 102, 241, 0.85)'),
+  (1, 'Transport', 'rgba(34, 197, 94, 0.85)'),
+  (1, 'Education', 'rgba(245, 158, 11, 0.85)'),
+  (1, 'Entertainment', 'rgba(239, 68, 68, 0.85)'),
+  (1, 'Others', 'rgba(148, 163, 184, 0.85)');
+
+  -- Notes
+  INSERT INTO `notes` (`user_id`, `title`, `content`) VALUES
+  (1, 'DBMS Normalization Rules', '1NF: Atomic values, 2NF: No partial dependency, 3NF: No transitive dependency, BCNF: Determinants must be super keys.'),
+  (1, 'Project Requirements', 'Need to implement full CRUD for all tables and ensure role checks are safe.');
+
+  -- Attendance
+  INSERT INTO `attendance` (`user_id`, `subject`, `date`, `status`) VALUES
+  (1, 'Database Systems', CURDATE() - INTERVAL 1 DAY, 'Present'),
+  (1, 'Operating Systems', CURDATE() - INTERVAL 1 DAY, 'Present'),
+  (1, 'Computer Networks', CURDATE(), 'Present'),
+  (1, 'Software Engineering', CURDATE(), 'Present');
 
   -- Activity Logs
   INSERT INTO `activity_logs` (`user_id`, `activity_type`, `module_name`, `description`, `created_at`) VALUES

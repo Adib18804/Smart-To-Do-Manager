@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forgot Password - Smart Student Life Management</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Custom Style Sheet -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="h-full flex items-center justify-center overflow-hidden bg-slate-50 dark:bg-slate-950">
+
+  <!-- Ambient background glow points -->
+  <div class="absolute top-[-20%] left-[-10%] w-[50%] h-[60%] rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none"></div>
+  <div class="absolute bottom-[-20%] right-[-10%] w-[50%] h-[60%] rounded-full bg-purple-500/10 blur-[120px] pointer-events-none"></div>
+
+  <!-- Main Container -->
+  <div class="w-full max-w-md p-6 relative z-10">
+    <!-- Top Row (Theme Switcher) -->
+    <div class="flex justify-end mb-6">
+      <button id="theme-toggle" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all focus:outline-none">
+        <!-- Sun icon -->
+        <svg class="w-5 h-5 hidden dark:block text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.364l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path>
+        </svg>
+        <!-- Moon icon -->
+        <svg class="w-5 h-5 block dark:hidden text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Card -->
+    <div class="glass-card p-8 bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/50 shadow-2xl rounded-3xl">
+      <div class="text-center mb-8">
+        <div class="inline-flex p-3 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 mb-3">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m-5-4v1a3 3 0 00-3 3H6a3 3 0 00-3 3 8.5 8.5 0 0010 8.5m5.5-1.5A3 3 0 1111 20M12 11h.01M12 12h.01M12 15h.01"></path>
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Recover Password</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5">Enter your email address to receive a recovery link</p>
+      </div>
+
+      <form id="forgot-form" class="space-y-5">
+        <div>
+          <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">Email Address</label>
+          <input type="email" id="email" required placeholder="name@school.com" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+        </div>
+
+        <button type="submit" class="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-lg shadow-indigo-600/15 hover:shadow-indigo-600/25 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+          Send Recovery Link
+        </button>
+      </form>
+
+      <!-- Dev Link Notice Section -->
+      <div id="dev-link-container" class="hidden mt-5 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400 text-center">
+        <p class="font-bold mb-1">Development Mode Recovery Link:</p>
+        <a id="dev-reset-link" href="#" target="_blank" class="underline font-mono break-all hover:text-emerald-500"></a>
+      </div>
+
+      <!-- Back to login -->
+      <div class="text-center mt-6">
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          Remember your password? 
+          <a href="/login" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">Sign in</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="/js/auth.js"></script>
+  <script>
+    document.getElementById('forgot-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+
+      try {
+        const res = await fetch('/api/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+          showToast('Reset link generated successfully!', 'success');
+          if (data.devLink) {
+            const devLinkContainer = document.getElementById('dev-link-container');
+            const devResetLink = document.getElementById('dev-reset-link');
+            devResetLink.href = data.devLink;
+            devResetLink.textContent = data.devLink;
+            devLinkContainer.classList.remove('hidden');
+          }
+        } else {
+          showToast(data.error || 'Failed to request reset link.', 'error');
+        }
+      } catch (error) {
+        console.error('Forgot password submit error:', error);
+        showToast('Connection error. Please try again.', 'error');
+      }
+    });
+  </script>
+</body>
+</html>

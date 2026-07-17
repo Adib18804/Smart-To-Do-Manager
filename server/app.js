@@ -3,12 +3,19 @@ const session = require("express-session");
 const path = require("path");
 const dotenv = require("dotenv");
 const fs = require("fs");
+const helmet = require("helmet");
+const bcrypt = require("bcryptjs");
 
 // Load environment variables from .env
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Apply Helmet security middleware (CSP disabled to allow external CDNs)
+app.use(helmet({
+  contentSecurityPolicy: false
+}));
 
 // Import database pool
 const pool = require("./config/db");
@@ -21,6 +28,12 @@ const expenseRoutes = require("./routes/expenseRoutes");
 const studyRoutes = require("./routes/studyRoutes");
 const goalRoutes = require("./routes/goalRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
+
+// New module routes
+const attendanceRoutes = require("./routes/attendanceRoutes");
+const noteRoutes = require("./routes/noteRoutes");
+const categoryRoutes = require("./routes/categoryRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 // Body parsing middleware
 app.use(express.json());
@@ -42,6 +55,21 @@ app.use(
     },
   }),
 );
+
+// Global target user resolution middleware for Super Admin workspace tracking
+app.use((req, res, next) => {
+  if (req.session && req.session.userId) {
+    if (req.session.role === 'Super Admin') {
+      const studentId = req.query.studentId || req.body.studentId;
+      if (studentId) {
+        req.userId = parseInt(studentId);
+        return next();
+      }
+    }
+    req.userId = req.session.userId;
+  }
+  next();
+});
 
 // Static files configuration
 app.use(express.static(path.join(__dirname, "../public")));
@@ -106,6 +134,89 @@ async function initDatabase() {
       console.log(
         "✅ All original database tables and sample data successfully initialized!",
       );
+
+      // Run migrations for role and reset columns
+      try {
+        const [columns] = await pool.query("SHOW COLUMNS FROM `users` LIKE 'role'");
+        if (columns.length === 0) {
+          console.log("Adding 'role' column to users table...");
+          await pool.query("ALTER TABLE `users` ADD COLUMN `role` VARCHAR(20) DEFAULT 'User'");
+        }
+      } catch (e) {
+        console.warn("Migration warning (role):", e.message);
+      }
+
+      try {
+        const [columns] = await pool.query("SHOW COLUMNS FROM `users` LIKE 'reset_token'");
+        if (columns.length === 0) {
+          console.log("Adding 'reset_token' and 'reset_token_expires' columns to users table...");
+          await pool.query("ALTER TABLE `users` ADD COLUMN `reset_token` VARCHAR(255) DEFAULT NULL, ADD COLUMN `reset_token_expires` DATETIME DEFAULT NULL");
+        }
+      } catch (e) {
+        console.warn("Migration warning (reset_token):", e.message);
+      }
+
+      try {
+        console.log("Ensuring expenses category column type is VARCHAR(100)...");
+        await pool.query("ALTER TABLE `expenses` MODIFY COLUMN `category` VARCHAR(100) DEFAULT 'Others'");
+      } catch (e) {
+        console.warn("Migration warning (modify category):", e.message);
+      }
+
+      // Dynamically make sure new tables exist
+      try {
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS \`attendance\` (
+            \`attendance_id\` INT AUTO_INCREMENT PRIMARY KEY,
+            \`user_id\` INT NOT NULL,
+            \`subject\` VARCHAR(100) NOT NULL,
+            \`date\` DATE NOT NULL,
+            \`status\` ENUM('Present', 'Absent', 'Late') DEFAULT 'Present',
+            \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (\`user_id\`) REFERENCES \`users\` (\`user_id\`) ON DELETE CASCADE
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS \`notes\` (
+            \`note_id\` INT AUTO_INCREMENT PRIMARY KEY,
+            \`user_id\` INT NOT NULL,
+            \`title\` VARCHAR(255) NOT NULL,
+            \`content\` TEXT NULL,
+            \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (\`user_id\`) REFERENCES \`users\` (\`user_id\`) ON DELETE CASCADE
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS \`categories\` (
+git add .            \`category_id\` INT AUTO_INCREMENT PRIMARY KEY,
+            \`user_id\` INT NOT NULL,
+            \`name\` VARCHAR(100) NOT NULL,
+            \`color\` VARCHAR(50) DEFAULT NULL,
+            \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (\`user_id\`) REFERENCES \`users\` (\`user_id\`) ON DELETE CASCADE,
+            UNIQUE KEY \`user_category\` (\`user_id\`, \`name\`)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+      } catch (e) {
+        console.warn("Migration warning (create tables):", e.message);
+      }
+
+      // Check and insert default Super Admin
+      try {
+        const adminEmail = 'admin@smartstudent.com';
+        const [adminRows] = await pool.query("SELECT * FROM users WHERE email = ?", [adminEmail]);
+        if (adminRows.length === 0) {
+          const salt = await bcrypt.genSalt(10);
+          const hashedPassword = await bcrypt.hash('Admin@123', salt);
+          await pool.query(
+            "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)",
+            ['Administrator', adminEmail, hashedPassword, 'Super Admin']
+          );
+          console.log("✅ Default Super Admin account successfully created!");
+        }
+      } catch (e) {
+        console.warn("Migration warning (admin account):", e.message);
+      }
     } else {
       console.warn(
         "⚠️ student_life_management.sql file not found at:",
@@ -160,6 +271,30 @@ app.get("/goals", authMiddleware.requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, "../views/goals.html"));
 });
 
+app.get("/attendance", authMiddleware.requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, "../views/attendance.html"));
+});
+
+app.get("/notes", authMiddleware.requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, "../views/notes.html"));
+});
+
+app.get("/categories", authMiddleware.requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, "../views/categories.html"));
+});
+
+app.get("/users", authMiddleware.requireSuperAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, "../views/users.html"));
+});
+
+app.get("/forgot-password", authMiddleware.redirectIfAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, "../views/forgot.html"));
+});
+
+app.get("/reset-password", authMiddleware.redirectIfAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, "../views/reset.html"));
+});
+
 // ==========================================
 // REST API ROUTING
 // ==========================================
@@ -170,6 +305,10 @@ app.use("/api/expenses", expenseRoutes);
 app.use("/api/study", studyRoutes);
 app.use("/api/goals", goalRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/attendance", attendanceRoutes);
+app.use("/api/notes", noteRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/users", userRoutes);
 
 // ==========================================
 // ERROR HANDLING MIDDLEWARE

@@ -7,7 +7,7 @@ const goalController = {
    */
   async getAll(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const goals = await Goal.getAll(userId);
       return res.json({ success: true, goals });
     } catch (error) {
@@ -21,7 +21,7 @@ const goalController = {
    */
   async getOne(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const goalId = req.params.id;
 
       const goal = await Goal.findById(userId, goalId);
@@ -40,7 +40,7 @@ const goalController = {
    */
   async create(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const { title, deadline, progress_percentage } = req.body;
 
       if (!title || !title.trim()) {
@@ -54,7 +54,7 @@ const goalController = {
       const progress = Math.min(100, Math.max(0, parseInt(progress_percentage) || 0));
       const goalId = await Goal.create(userId, { title, deadline, progress_percentage: progress });
 
-      await Activity.log(userId, 'Create', 'Goals', `Created goal: "${title}" (${progress}% progress)`);
+      await Activity.log(req.session.userId, 'Create', 'Goals', `Created goal: "${title}" (${progress}% progress)`);
 
       return res.status(201).json({ success: true, message: 'Goal created successfully.', goalId });
     } catch (error) {
@@ -68,7 +68,7 @@ const goalController = {
    */
   async update(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const goalId = req.params.id;
       const { title, deadline, progress_percentage } = req.body;
 
@@ -93,9 +93,9 @@ const goalController = {
       }
 
       if (progress === 100 && originalGoal.progress_percentage !== 100) {
-        await Activity.log(userId, 'Complete', 'Goals', `Achieved goal: "${title}"!`);
+        await Activity.log(req.session.userId, 'Complete', 'Goals', `Achieved goal: "${title}"!`);
       } else {
-        await Activity.log(userId, 'Update', 'Goals', `Updated progress/details for goal "${title}" to ${progress}%`);
+        await Activity.log(req.session.userId, 'Update', 'Goals', `Updated progress/details for goal "${title}" to ${progress}%`);
       }
 
       return res.json({ success: true, message: 'Goal updated successfully.' });
@@ -110,7 +110,7 @@ const goalController = {
    */
   async updateProgress(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const goalId = req.params.id;
       const { progress_percentage } = req.body;
 
@@ -131,9 +131,9 @@ const goalController = {
       }
 
       if (progress === 100 && goal.progress_percentage !== 100) {
-        await Activity.log(userId, 'Complete', 'Goals', `Achieved goal: "${goal.title}"!`);
+        await Activity.log(req.session.userId, 'Complete', 'Goals', `Achieved goal: "${goal.title}"!`);
       } else {
-        await Activity.log(userId, 'Update', 'Goals', `Adjusted goal progress for "${goal.title}" to ${progress}%`);
+        await Activity.log(req.session.userId, 'Update', 'Goals', `Adjusted goal progress for "${goal.title}" to ${progress}%`);
       }
 
       return res.json({ success: true, message: `Goal progress set to ${progress}%.` });
@@ -148,7 +148,7 @@ const goalController = {
    */
   async delete(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const goalId = req.params.id;
 
       const goal = await Goal.findById(userId, goalId);
@@ -161,7 +161,7 @@ const goalController = {
         return res.status(400).json({ success: false, error: 'Failed to delete goal.' });
       }
 
-      await Activity.log(userId, 'Delete', 'Goals', `Deleted goal: "${goal.title}"`);
+      await Activity.log(req.session.userId, 'Delete', 'Goals', `Deleted goal: "${goal.title}"`);
 
       return res.json({ success: true, message: 'Goal deleted successfully.' });
     } catch (error) {

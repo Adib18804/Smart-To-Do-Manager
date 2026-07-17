@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notes - Smart Student Life Management</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Custom Style Sheet -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b12] text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-300">
+
+  <!-- Ambient Light Effects -->
+  <div class="absolute top-0 right-0 w-[40%] h-[30%] bg-indigo-500/5 dark:bg-indigo-500/10 blur-[100px] pointer-events-none"></div>
+  <div class="absolute bottom-0 left-0 w-[40%] h-[30%] bg-purple-500/5 dark:bg-purple-500/10 blur-[100px] pointer-events-none"></div>
+
+  <!-- Sidebar Navigation -->
+  <aside id="sidebar" class="w-64 bg-[#0a0f1d] text-slate-400 flex flex-col justify-between border-r border-slate-200/10 dark:border-slate-800/40 h-screen fixed top-0 left-0 z-30 transition-transform duration-300 -translate-x-full md:translate-x-0">
+    <div class="p-6">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="p-2 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-600/30">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-sm font-bold text-white leading-none">Smart Student</h1>
+          <span class="text-[10px] text-slate-500 font-semibold tracking-wider">MANAGEMENT SYSTEM</span>
+        </div>
+      </div>
+      
+      <nav class="space-y-1.5">
+        <a href="/dashboard" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all" id="nav-dashboard">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"></path></svg>
+          Dashboard
+        </a>
+        <a href="/tasks" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all" id="nav-tasks">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2m-6 9l2 2 4-4"></path></svg>
+          To-Do List
+        </a>
+        <a href="/study" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all" id="nav-study">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+          Study Planner
+        </a>
+        <a href="/expenses" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all" id="nav-expenses">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 8c1.11 0 2.08.402 2.599 1m-2.599 3.599l2-2"></path></svg>
+          Expenses
+        </a>
+        <a href="/goals" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all" id="nav-goals">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          Goals Tracker
+        </a>
+        <a href="/attendance" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all" id="nav-attendance">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          Attendance
+        </a>
+        <a href="/notes" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all" id="nav-notes">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          Notes
+        </a>
+        <a href="/categories" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all" id="nav-categories">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7a2 2 0 010-2.828l7-7c.391-.391.902-.586 1.414-.586m0 11h14"></path></svg>
+          Categories
+        </a>
+      </nav>
+    </div>
+    
+    <div class="p-6 border-t border-slate-200/10">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center font-bold text-base shadow-inner user-avatar-initials" id="user-avatar">
+          S
+        </div>
+        <div class="overflow-hidden">
+          <h4 class="text-sm font-semibold text-white truncate user-display-name">Student User</h4>
+          <span class="text-xs text-slate-500 truncate block user-display-email">student@email.com</span>
+        </div>
+      </div>
+      <button id="logout-btn" class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-800 text-slate-400 hover:text-white hover:bg-rose-600/90 hover:border-rose-600 transition-all font-medium text-sm focus:outline-none">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden"></div>
+
+  <!-- Main Wrapper -->
+  <div class="md:ml-64 flex flex-col min-h-screen">
+    <!-- Header -->
+    <header class="h-16 px-6 border-b border-slate-200 dark:border-slate-800/80 bg-white/70 dark:bg-[#070b12]/60 backdrop-blur-md flex items-center justify-between sticky top-0 z-10">
+      <div class="flex items-center gap-4">
+        <button id="mobile-toggle" class="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 md:hidden focus:outline-none">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+        <div>
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white">Notes</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">Write and organize your notes</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-4">
+        <button id="theme-toggle" class="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all focus:outline-none">
+          <svg class="w-5 h-5 hidden dark:block text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.364l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path></svg>
+          <svg class="w-5 h-5 block dark:hidden text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+        <button id="btn-add-note" class="py-2 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-md shadow-indigo-600/10 text-sm transition-all focus:outline-none">
+          Add Note
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow p-6 space-y-6 max-w-7xl mx-auto w-full">
+      <!-- Search and Sorting Bar -->
+      <div class="glass-card p-4 bg-white/60 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-4 justify-between items-center">
+        <!-- Search bar -->
+        <div class="w-full md:w-72 relative">
+          <input type="text" id="search-input" placeholder="Search notes..." class="w-full pl-10 pr-4 py-2 rounded-xl custom-input text-sm">
+          <div class="absolute left-3.5 top-2.5 text-slate-400">
+            <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          </div>
+        </div>
+
+        <!-- Filter widgets -->
+        <div class="w-full md:w-auto flex flex-wrap items-center gap-3">
+          <!-- Sort dropdown -->
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-500 font-semibold uppercase">Sort By</span>
+            <select id="sort-by" class="py-2 pl-3 pr-8 rounded-xl custom-input text-xs appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem] bg-[right:0.5rem:center] bg-no-repeat cursor-pointer">
+              <option value="created_at_desc">Newest First</option>
+              <option value="created_at_asc">Oldest First</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes List -->
+      <div id="notes-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Javascript renders note cards here -->
+        <div class="col-span-full text-center py-12 text-slate-500 dark:text-slate-400">
+          Loading notes...
+        </div>
+      </div>
+
+      <!-- Empty State Indicator -->
+      <div id="notes-empty-state" class="hidden glass-card p-12 text-center bg-white/60 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800">
+        <div class="w-16 h-16 mx-auto mb-4 bg-indigo-500/10 text-indigo-500 flex items-center justify-center rounded-2xl">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        </div>
+        <h4 class="text-base font-bold text-slate-900 dark:text-white mb-1.5">No Notes Found</h4>
+        <p class="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-5">You haven't written any notes yet. Start jotting down your thoughts!</p>
+        <button onclick="document.getElementById('btn-add-note').click()" class="py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md shadow-indigo-600/15 text-sm transition-all focus:outline-none">
+          Create New Note
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Note Add/Edit Modal (hidden by default) -->
+  <div id="note-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+    <!-- Modal Backdrop -->
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" id="modal-backdrop"></div>
+    
+    <!-- Modal Content Card -->
+    <div class="glass-card w-full max-w-lg bg-white dark:bg-[#0a0f1d] border border-slate-200 dark:border-slate-800 p-8 shadow-2xl relative z-10 rounded-3xl transform scale-95 transition-all duration-300">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white" id="modal-title">Add Note</h3>
+        <button id="modal-close" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <form id="note-form" class="space-y-5">
+        <input type="hidden" id="note-id">
+        
+        <div>
+          <label for="note-title" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Title</label>
+          <input type="text" id="note-title" required placeholder="My Note" class="w-full px-4 py-2.5 rounded-xl custom-input text-sm">
+        </div>
+
+        <div>
+          <label for="note-content" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Content</label>
+          <textarea id="note-content" rows="6" placeholder="Write your note here..." class="w-full px-4 py-2.5 rounded-xl custom-input text-sm"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" id="modal-cancel" class="py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/60 font-semibold text-sm transition-all focus:outline-none">
+            Cancel
+          </button>
+          <button type="submit" class="py-2.5 px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md shadow-indigo-600/10 text-sm transition-all focus:outline-none">
+            Save Note
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal (hidden by default) -->
+  <div id="delete-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" id="delete-backdrop"></div>
+    <div class="glass-card w-full max-w-sm bg-white dark:bg-[#0a0f1d] border border-slate-200 dark:border-slate-800 p-6 shadow-2xl relative z-10 rounded-2xl text-center transform scale-95 transition-all">
+      <div class="w-12 h-12 mx-auto mb-3 bg-rose-500/10 text-rose-500 flex items-center justify-center rounded-xl">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+      </div>
+      <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1.5">Delete Note?</h3>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mb-5">This action is permanent and cannot be undone. Are you sure?</p>
+      
+      <div class="flex justify-center gap-3">
+        <button id="delete-cancel" class="py-2 px-4 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/60 font-semibold text-xs transition-all focus:outline-none">
+          Cancel
+        </button>
+        <button id="delete-confirm" class="py-2 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold shadow-md shadow-rose-600/10 text-xs transition-all focus:outline-none">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="/js/auth.js"></script>
+  <script src="/js/notes.js"></script>
+</body>
+</html>

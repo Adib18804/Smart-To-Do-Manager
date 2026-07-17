@@ -7,7 +7,7 @@ const studyController = {
    */
   async getAll(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const sessions = await StudySession.getAll(userId);
       return res.json({ success: true, sessions });
     } catch (error) {
@@ -21,7 +21,7 @@ const studyController = {
    */
   async getOne(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const sessionId = req.params.id;
 
       const session = await StudySession.findById(userId, sessionId);
@@ -40,7 +40,7 @@ const studyController = {
    */
   async create(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const { subject_name, study_date, duration_hours, notes } = req.body;
 
       if (!subject_name || !subject_name.trim()) {
@@ -57,7 +57,7 @@ const studyController = {
 
       const sessionId = await StudySession.create(userId, { subject_name, study_date, duration_hours, notes });
 
-      await Activity.log(userId, 'Create', 'Study Planner', `Studied "${subject_name}" for ${duration_hours} hours`);
+      await Activity.log(req.session.userId, 'Create', 'Study Planner', `Studied "${subject_name}" for ${duration_hours} hours`);
 
       return res.status(201).json({ success: true, message: 'Study session logged successfully.', sessionId });
     } catch (error) {
@@ -71,7 +71,7 @@ const studyController = {
    */
   async update(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const sessionId = req.params.id;
       const { subject_name, study_date, duration_hours, notes } = req.body;
 
@@ -97,7 +97,7 @@ const studyController = {
         return res.status(400).json({ success: false, error: 'Failed to update study session.' });
       }
 
-      await Activity.log(userId, 'Update', 'Study Planner', `Updated session for "${subject_name}" (${duration_hours} hrs)`);
+      await Activity.log(req.session.userId, 'Update', 'Study Planner', `Updated session for "${subject_name}" (${duration_hours} hrs)`);
 
       return res.json({ success: true, message: 'Study session updated successfully.' });
     } catch (error) {
@@ -111,7 +111,7 @@ const studyController = {
    */
   async delete(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const sessionId = req.params.id;
 
       const session = await StudySession.findById(userId, sessionId);
@@ -124,7 +124,7 @@ const studyController = {
         return res.status(400).json({ success: false, error: 'Failed to delete study session.' });
       }
 
-      await Activity.log(userId, 'Delete', 'Study Planner', `Deleted study session for "${session.subject_name}" (${session.duration_hours} hrs)`);
+      await Activity.log(req.session.userId, 'Delete', 'Study Planner', `Deleted study session for "${session.subject_name}" (${session.duration_hours} hrs)`);
 
       return res.json({ success: true, message: 'Study session deleted successfully.' });
     } catch (error) {
@@ -138,7 +138,7 @@ const studyController = {
    */
   async getAnalytics(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
 
       const totalHours = await StudySession.getTotalHours(userId);
       const weeklyStats = await StudySession.getWeeklyStats(userId);

@@ -108,6 +108,19 @@ const Expense = {
     `;
     const [rows] = await db.query(sql, [userId]);
     return rows;
+  },
+
+  /**
+   * Total expenses of all time for user
+   */
+  async getTotal(userId) {
+    const sql = `
+      SELECT SUM(amount) as total 
+      FROM expenses 
+      WHERE user_id = ?
+    `;
+    const [rows] = await db.query(sql, [userId]);
+    return parseFloat(rows[0].total) || 0;
   }
 };
 

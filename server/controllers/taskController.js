@@ -7,7 +7,7 @@ const taskController = {
    */
   async getAll(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const { search, status, priority, sortBy } = req.query;
       
       const tasks = await Task.getAll(userId, { search, status, priority, sortBy });
@@ -23,7 +23,7 @@ const taskController = {
    */
   async getOne(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const taskId = req.params.id;
       
       const task = await Task.findById(userId, taskId);
@@ -42,7 +42,7 @@ const taskController = {
    */
   async create(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const { title, description, priority, status, deadline } = req.body;
 
       if (!title || !title.trim()) {
@@ -52,7 +52,7 @@ const taskController = {
       const taskId = await Task.create(userId, { title, description, priority, status, deadline });
       
       // Log this action
-      await Activity.log(userId, 'Create', 'Tasks', `Created task: "${title}"`);
+      await Activity.log(req.session.userId, 'Create', 'Tasks', `Created task: "${title}"`);
 
       return res.status(201).json({ success: true, message: 'Task created successfully.', taskId });
     } catch (error) {
@@ -66,7 +66,7 @@ const taskController = {
    */
   async update(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const taskId = req.params.id;
       const { title, description, priority, status, deadline } = req.body;
 
@@ -87,9 +87,9 @@ const taskController = {
 
       // Trigger different log types depending on whether the task status was set to Completed
       if (status === 'Completed' && originalTask.status !== 'Completed') {
-        await Activity.log(userId, 'Complete', 'Tasks', `Completed task: "${title}"`);
+        await Activity.log(req.session.userId, 'Complete', 'Tasks', `Completed task: "${title}"`);
       } else {
-        await Activity.log(userId, 'Update', 'Tasks', `Updated task details for: "${title}"`);
+        await Activity.log(req.session.userId, 'Update', 'Tasks', `Updated task details for: "${title}"`);
       }
 
       return res.json({ success: true, message: 'Task updated successfully.' });
@@ -104,7 +104,7 @@ const taskController = {
    */
   async toggleStatus(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const taskId = req.params.id;
       const { status } = req.body;
 
@@ -123,7 +123,7 @@ const taskController = {
       }
 
       const logAction = status === 'Completed' ? 'Complete' : 'Update';
-      await Activity.log(userId, logAction, 'Tasks', `Marked task "${task.title}" as ${status}`);
+      await Activity.log(req.session.userId, logAction, 'Tasks', `Marked task "${task.title}" as ${status}`);
 
       return res.json({ success: true, message: `Task marked as ${status}.` });
     } catch (error) {
@@ -137,7 +137,7 @@ const taskController = {
    */
   async delete(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
       const taskId = req.params.id;
 
       const task = await Task.findById(userId, taskId);
@@ -150,7 +150,7 @@ const taskController = {
         return res.status(400).json({ success: false, error: 'Failed to delete task.' });
       }
 
-      await Activity.log(userId, 'Delete', 'Tasks', `Deleted task: "${task.title}"`);
+      await Activity.log(req.session.userId, 'Delete', 'Tasks', `Deleted task: "${task.title}"`);
 
       return res.json({ success: true, message: 'Task deleted successfully.' });
     } catch (error) {

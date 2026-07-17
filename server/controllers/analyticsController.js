@@ -3,6 +3,9 @@ const Expense = require('../models/expenseModel');
 const StudySession = require('../models/studyModel');
 const Goal = require('../models/goalModel');
 const Activity = require('../models/activityModel');
+const Attendance = require('../models/attendanceModel');
+const Note = require('../models/noteModel');
+const User = require('../models/userModel');
 
 const analyticsController = {
   /**
@@ -10,14 +13,19 @@ const analyticsController = {
    */
   async getDashboardData(req, res) {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId || req.session.userId;
+      const isSuperAdmin = req.session.role === 'Super Admin';
 
       // 1. Fetch card statistics in parallel
-      const [taskStats, monthlyExpenses, totalStudyHours, goalStats] = await Promise.all([
+      const [taskStats, monthlyExpenses, totalStudyHours, goalStats, attendanceStats, notesCount, totalExpenses, allUsers] = await Promise.all([
         Task.getStats(userId),
         Expense.getMonthlyTotal(userId),
         StudySession.getTotalHours(userId),
-        Goal.getStats(userId)
+        Goal.getStats(userId),
+        Attendance.getStats(userId),
+        Note.getCount(userId),
+        Expense.getTotal(userId),
+        isSuperAdmin ? User.getAll() : []
       ]);
 
       // 2. Fetch lists for widgets
@@ -50,14 +58,19 @@ const analyticsController = {
           completedTasks: taskStats.completed,
           pendingTasks: taskStats.pending,
           monthlyExpenses,
+          totalExpenses,
           totalStudyHours,
           activeGoals: goalStats.active,
-          completedGoals: goalStats.completed
+          completedGoals: goalStats.completed,
+          attendanceStats,
+          notesCount,
+          totalStudents: isSuperAdmin ? allUsers.length : null
         },
         productivityScore,
         widgets: {
           recentActivities,
-          upcomingDeadlines
+          upcomingDeadlines,
+          allUsers: isSuperAdmin ? allUsers : null
         },
         charts: {
           expenseTrend,
